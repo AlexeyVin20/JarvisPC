@@ -1,0 +1,38 @@
+# Jarvis PC infrastructure: PostgreSQL (profiles/sessions/memory) + 4get
+# metasearch used by the web_search tool.
+#   docker compose up -d
+name: jarvispc
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: jarvis-postgres
+    restart: unless-stopped
+    # 5433: a local postgres service already owns 5432 on this machine
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    environment:
+      POSTGRES_USER: jarvis
+      POSTGRES_PASSWORD: jarvis
+      POSTGRES_DB: jarvis
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jarvis -d jarvis"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  fourget:
+    image: luuul/4get:latest
+    container_name: jarvis-4get
+    restart: unless-stopped
+    # FOURGET_PORT lets a second 4get coexist with an already-running one on :80
+    ports:
+      - "${FOURGET_PORT:-80}:80"
+    environment:
+      - FOURGET_SITE_NAME=4get
+      - FOURGET_SERVER_NAME=localhost
+
+volumes:
+  pgdata:
