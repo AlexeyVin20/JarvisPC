@@ -45,6 +45,27 @@ class Settings:
         default_factory=lambda: os.getenv("WEBSEARCH_ENDPOINT", "http://localhost/web")
     )
 
+    # ACP coding agent (local Cursor/Devin CLI over Agent Client Protocol).
+    # ACP_AGENT_CMD is spawned per task: "cursor-agent acp", "agent acp",
+    # "devin acp --model swe-2", "gemini --acp", a full .exe path, ...
+    acp_agent_cmd: str = field(
+        default_factory=lambda: os.getenv("ACP_AGENT_CMD", "cursor-agent acp")
+    )
+    # Default project dir for tasks when the tool call doesn't pass project_dir
+    acp_default_cwd: str = field(default_factory=lambda: os.getenv("ACP_DEFAULT_CWD", ""))
+    # authenticate meta.api_key (Devin cog_... key); empty = rely on CLI login
+    acp_api_key: str = field(default_factory=lambda: os.getenv("ACP_API_KEY", ""))
+    # Force an auth methodId instead of the first advertised one
+    acp_auth_method: str = field(default_factory=lambda: os.getenv("ACP_AUTH_METHOD", ""))
+    # Auto-answer for session/request_permission: allow_once|allow_always|reject
+    acp_permission: str = field(
+        default_factory=lambda: os.getenv("ACP_PERMISSION", "allow_once")
+    )
+    # session/prompt timeout — coding turns run long
+    acp_prompt_timeout: float = field(
+        default_factory=lambda: float(os.getenv("ACP_PROMPT_TIMEOUT_SEC", "1800"))
+    )
+
     # Google OAuth sign-in (Gemini API access without a manual key)
     google_oauth_client_id: str = field(
         default_factory=lambda: os.getenv("GOOGLE_OAUTH_CLIENT_ID", "")

@@ -32,6 +32,9 @@ async def lifespan(app: FastAPI):
     await store.seed_defaults()
     logger.info("Jarvis backend ready", port=settings.port)
     yield
+    from app.acp import acp_tasks
+
+    await acp_tasks.shutdown()
     await close_pool()
 
 

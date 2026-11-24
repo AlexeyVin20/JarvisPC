@@ -59,6 +59,8 @@ class AgentSession:
         self._auto_mem_count = 0
         self._auto_mem_task: Optional[asyncio.Task] = None
         self._title_pending = True
+        # Live voice channel, if one wraps this session (set by VoiceSession)
+        self.voice: Optional["VoiceSession"] = None
 
     # ------------------------------------------------------------ events
 
@@ -157,8 +159,20 @@ class AgentSession:
             profile=self.profile,
             session_id=self.session.id,
             trace=_trace,
+            notify=self._background_notify,
             last_user_utterance=self.last_user_utterance,
         )
+
+    async def _background_notify(self, text: str) -> None:
+        """Background-tool completion: persist a TOOL line and, when a voice
+        session is live, inject it so the agent speaks the result."""
+        await self.trace("acp_task", text)
+        voice = self.voice
+        if voice is not None and voice.connected:
+            try:
+                await voice.inject_note(text)
+            except Exception as e:
+                logger.debug("voice inject failed", error=str(e))
 
     async def handle_tool_call(self, name: str, args: dict[str, Any]) -> dict[str, Any]:
         await self.set_state(AgentState.THINKING)
@@ -222,6 +236,7 @@ class VoiceSession:
             asyncio.create_task(self._pump_audio(), name="live-audio-out"),
             asyncio.create_task(self._pump_events(), name="live-events"),
         ]
+        agent.voice = self
 
     async def _pump_audio(self) -> None:
         """Gemini audio -> emit to the browser as binary frames."""
@@ -328,8 +343,22 @@ class VoiceSession:
             await self.agent.set_state(AgentState.THINKING)
             await self._client.send_text(text)
 
+    async def inject_note(self, text: str) -> None:
+        """Background-event nudge: the model speaks it as a turn of its own.
+
+        Unlike send_text() this does NOT persist a user transcript line —
+        the event itself is already recorded as a TOOL trace.
+        """
+        if self._client is not None and self._client.is_connected:
+            await self._client.send_text(
+                f"[фоновое событие, не от пользователя] {text} "
+                "— сообщи об этом пользователю кратко и по делу."
+            )
+
     async def stop(self) -> None:
         self._running = False
+        if self.agent.voice is self:
+            self.agent.voice = None
         for t in self._tasks:
             t.cancel()
         if self._tasks:

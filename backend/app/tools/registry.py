@@ -22,6 +22,9 @@ class ToolContext:
     user_id: str = "local"
     # Trace callback (name, summary) -> shown in UI and persisted as TOOL line
     trace: Optional[Callable[[str, str], Awaitable[None]]] = None
+    # Completion callback for background tools (ACP tasks): persists a TOOL
+    # line and, when a voice session is live, makes the agent speak the text.
+    notify: Optional[Callable[[str], Awaitable[None]]] = None
     # Last user utterance — tools like memory/search use it as fallback query
     last_user_utterance: str = ""
 

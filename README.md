@@ -15,8 +15,11 @@
   дедупликация → MMR → извлечение DOM→Markdown → склейка окон.
 - **Headless**: REST `POST /api/chat` и CLI `python -m app.cli`.
 - **PostgreSQL** вместо Firebase: профили, сессии, сообщения.
-- Плагинный реестр инструментов (`app/tools/registry.py`) — место для будущих
-  Devin/ACP-задач (флаг `enable_tasks` в профиле уже заложен).
+- **Кодинг-задачи по ACP**: инструмент `dispatch_coding_task` спавнит локальный
+  агент CLI (`cursor-agent acp`, `devin acp`, …) прямо на ПК и гоняет задачу в
+  фоне; статус/ответы/отмена — `coding_task_status`, `reply_to_coding_task`,
+  `cancel_coding_task`. Гейтинг — `enable_tasks` в профиле; команда и политика
+  пермишенов — `ACP_*` в `.env`. Итог озвучивается, когда голосовая сессия жива.
 
 ## Структура
 
@@ -35,7 +38,8 @@ JarvisPC/
 │       ├── gemini/
 │       │   ├── live.py     GeminiLiveClient (адаптирован из VoiceAgent: +send_text, +live-транскрипты)
 │       │   └── text.py     generateContent REST + function-calling loop
-│       ├── tools/          реестр: web_search (4get), update_memory
+│       ├── acp.py          ACP-клиент (JSON-RPC по stdio) + менеджер фоновых задач
+│       ├── tools/          реестр: web_search (4get), update_memory, tasks (ACP)
 │       ├── websearch/      vendored пайплайн из VoiceAgent (как есть)
 │       └── cli.py          headless REPL
 └── web/                    Next.js 15 (App Router)

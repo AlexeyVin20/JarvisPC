@@ -16,7 +16,11 @@ def tool_names_for(profile: Profile) -> list[str]:
         names.append("web_search (локальный метапоиск 4get + извлечение контекста)")
     if profile.enable_memory:
         names.append(f"update_memory (полуавтоматическая память до {MAX_MEMORY_TOKENS} токенов)")
-    # profile.enable_tasks -> Devin task tools plug in here later.
+    if profile.enable_tasks:
+        names.append(
+            "dispatch_coding_task + coding_task_status/reply_to_coding_task/cancel_coding_task "
+            "(фоновые кодинг-задачи в локальный ACP-агент — Cursor/Devin)"
+        )
     return names
 
 
